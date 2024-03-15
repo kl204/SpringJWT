@@ -1,5 +1,7 @@
 package com.example.springjwt.config;
 
+import com.example.springjwt.jwt.JWTFilter;
+import com.example.springjwt.jwt.JWTUtil;
 import com.example.springjwt.jwt.LoginFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,10 +20,12 @@ public class SecurityConfig {
 
     //AuthenticationManager가 인자로 받을 AuthenticationConfiguraion 객체 생성자 주입
     private final AuthenticationConfiguration authenticationConfiguration;
+    private final JWTUtil jwtUtil;
 
-    public SecurityConfig(AuthenticationConfiguration authenticationConfiguration) {
+    public SecurityConfig(AuthenticationConfiguration authenticationConfiguration, JWTUtil jwtUtil) {
 
         this.authenticationConfiguration = authenticationConfiguration;
+        this.jwtUtil = jwtUtil;
     }
 
     //AuthenticationManager Bean 등록
@@ -59,11 +63,15 @@ public class SecurityConfig {
                         .requestMatchers("/admin").hasRole("ADMIN")
                         .anyRequest().authenticated());
 
+        // 로그인 필터 전에 jwt 필터를 실행하도록 함
+        http
+                .addFilterBefore(new JWTFilter(jwtUtil), LoginFilter.class);
+
         http
                 // addFilterAt은 딱 원하는 자리에 등록
                 // Before은 해당하는 필터 전에 등록
                 // after는 해당하는 필터 후에 등록
-                .addFilterAt(new LoginFilter(authenticationManager(authenticationConfiguration)), UsernamePasswordAuthenticationFilter.class);
+                .addFilterAt(new LoginFilter(authenticationManager(authenticationConfiguration),jwtUtil), UsernamePasswordAuthenticationFilter.class);
                 //addFilterAt(어떤 필터를 쓸거냐, 어느 자리에 쓸꺼냐)
 
         //세션 설정

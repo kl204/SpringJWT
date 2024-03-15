@@ -17,8 +17,9 @@ public class JWTUtil {
     private SecretKey secretKey;
 
     // 생성자를 통해서 SecretKey 객체를 만들어준다.
-    public JWTUtil(@Value("@{spring.jwt.secret}")String secret){
-       this.secretKey = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), Jwts.SIG.HS256.key().build().getAlgorithm());
+    public JWTUtil(@Value("${spring.jwt.secret}")String secret){
+
+        secretKey = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), Jwts.SIG.HS256.key().build().getAlgorithm());
     }
 
     // 토큰 검증 메서드 (secretKey, Role, Expired)
