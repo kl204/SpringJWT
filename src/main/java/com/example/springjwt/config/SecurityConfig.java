@@ -1,16 +1,35 @@
 package com.example.springjwt.config;
 
+import com.example.springjwt.jwt.LoginFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    //AuthenticationManager가 인자로 받을 AuthenticationConfiguraion 객체 생성자 주입
+    private final AuthenticationConfiguration authenticationConfiguration;
+
+    public SecurityConfig(AuthenticationConfiguration authenticationConfiguration) {
+
+        this.authenticationConfiguration = authenticationConfiguration;
+    }
+
+    //AuthenticationManager Bean 등록
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+
+        return configuration.getAuthenticationManager();
+    }
 
     @Bean
     public BCryptPasswordEncoder bCryptPasswordEncoder() {
@@ -39,6 +58,13 @@ public class SecurityConfig {
                         .requestMatchers("/login", "/", "/join").permitAll()
                         .requestMatchers("/admin").hasRole("ADMIN")
                         .anyRequest().authenticated());
+
+        http
+                // addFilterAt은 딱 원하는 자리에 등록
+                // Before은 해당하는 필터 전에 등록
+                // after는 해당하는 필터 후에 등록
+                .addFilterAt(new LoginFilter(authenticationManager(authenticationConfiguration)), UsernamePasswordAuthenticationFilter.class);
+                //addFilterAt(어떤 필터를 쓸거냐, 어느 자리에 쓸꺼냐)
 
         //세션 설정
         http
